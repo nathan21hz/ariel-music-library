@@ -21,6 +21,16 @@ var app = new Vue({
             } else {
                 this.$message('本歌曲无连接，请至作品集中查看');
             }
+        },
+        haveUrl(url){
+            if(url == "" || url == null){
+                return false
+            } else {
+                return true
+            }
+        },
+        handleDropdown(command){
+            this.onGoto(command)
         }
     }
 });

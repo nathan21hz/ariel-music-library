@@ -19,14 +19,14 @@
         <el-button @click="onGoto('https://music.163.com/#/artist?id=10089')" style="margin:10px">转到 司夏（网易云音乐）</el-button>
          <el-button @click="onGoto('https://space.bilibili.com/155616')" style="margin:10px">转到 西国之海妖（B站）</el-button>
           <el-button @click="onGoto('http://5sing.kugou.com/ariel/')" style="margin:10px">转到 司夏_西国海妖（5Sing）</el-button>
-          <br>
-        <el-button @click="onGoto('http://tieba.baidu.com/p/6028572704')">转到司夏_西国の海妖作品集（贴吧）</el-button>
-        <el-button @click="onGoto('https://github.com/nathan21hz/neris-music-library')">司夏作品查询工具（GitHub）</el-button>
+          <br><br>
+        <el-button @click="onGoto('http://tieba.baidu.com/p/6028572704')" style="margin:10px">转到司夏_西国の海妖作品集（贴吧）</el-button>
+        <el-button @click="onGoto('https://github.com/nathan21hz/neris-music-library')" style="margin:10px">司夏作品查询工具（GitHub）</el-button>
     </el-tab-pane>
     <el-tab-pane label="歌曲查询" name="query">
       <el-input v-model="search" placeholder="输入关键字搜索"></el-input>
       <el-table
-        :data="tableData.filter(data => !search || data.title.toLowerCase().includes(search.toLowerCase()) || data.artists.toLowerCase().includes(search.toLowerCase()) || data.group.toLowerCase().includes(search.toLowerCase()) )"
+        :data="tableData.filter(data => !search || data.title.toLowerCase().includes(search.toLowerCase()) || data.artists.toLowerCase().includes(search.toLowerCase()) || data.group.toLowerCase().includes(search.toLowerCase()) )" stripe 
         style="width: 100%">
       <el-table-column label="序号" prop="id" width="60"></el-table-column>
       <el-table-column label="曲名" prop="title"></el-table-column>
@@ -38,7 +38,17 @@
           链接
         </template>
         <template slot-scope="scope">
-          <el-button size="mini" @click="onGoto(scope.row.url)">转到链接</el-button>
+          <el-dropdown @command="handleDropdown">
+            <el-button size="small" type="primary">转到链接
+            </el-button>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item :command="scope.row.netease" v-if="haveUrl(scope.row.netease)">网易云音乐</el-dropdown-item>
+              <el-dropdown-item :command="scope.row.sing" v-if="haveUrl(scope.row.sing)">5Sing</el-dropdown-item>
+              <el-dropdown-item :command="scope.row.qqmusic" v-if="haveUrl(scope.row.qqmusic)">QQ音乐</el-dropdown-item>
+              <el-dropdown-item :command="scope.row.other" v-if="haveUrl(scope.row.other)">其他平台</el-dropdown-item>
+              <el-dropdown-item :command="scope.row.other" disabled="true" v-if="!haveUrl(scope.row.netease || scope.row.sing || scope.row.qqmusic || scope.row.other)">暂无外链</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
         </template>
       </el-table-column>
     </el-table>
