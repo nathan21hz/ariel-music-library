@@ -8,11 +8,11 @@
   <link rel="icon" href="./logo.png" sizes="32x32">
 </head>
 <body>
-  <div id="app">
-  <h2>司夏_西国の海妖作品查询工具</h2>
+  <div id="app" v-loading.fullscreen.lock="loading">
+  <h2 style="color: #303133;text-align:center">司夏 西国の海妖 作品查询工具</h2>
   <el-tabs type="border-card" v-model="activeName">
     <el-tab-pane label="使用须知" name="alert">
-        <h3>媒体库更新时间 {{ updateTime }}</h3>
+        <h3>资料更新时间 {{ updateTime }}</h3>
         1. 本工具基础数据来自 西国の海妖吧 闻名天下的大盗<br>
         2. 考虑到版权问题，所有歌曲的跳转链接都为各大音乐平台在线播放链接，无连接歌曲请自行在作品集中查找<br>
         3. 跳转链接分为：网易云音乐、5Sing、QQ音乐、其他平台（酷狗/酷我/B站/转圈）<br>
@@ -46,8 +46,15 @@
         <el-button @click="onGoto('http://tieba.baidu.com/p/6028572704')" style="margin:10px">转到司夏_西国の海妖作品集（贴吧）</el-button>
         <el-button @click="onGoto('https://github.com/nathan21hz/neris-music-library')" style="margin:10px">司夏作品查询工具（GitHub）</el-button>
         <h4>更新日志</h4>
-        2019-03-30 添加帮助整理外链功能 添加平台外链覆盖率统计<br>
-        2019-03-29 基本功能开发完成
+            <div v-html="updateInfo"></div>
+        <el-collapse>
+          <el-collapse-item title="以往日志" name="1">
+            <el-table :data="prevLog" style="width: 100%">
+              <el-table-column prop="time" label="时间" width="100"></el-table-column>
+              <el-table-column prop="log" label="更新记录"></el-table-column>
+            </el-table>
+          </el-collapse-item>
+        </el-collapse>
     </el-tab-pane>
     <el-tab-pane label="歌曲查询" name="query">
       <el-input v-model="search" placeholder="输入关键字搜索"></el-input>
@@ -87,5 +94,6 @@
 <script src="https://cdn.bootcss.com/element-ui/2.4.11/index.js"></script>
 <script src="https://cdn.bootcss.com/vue-resource/1.5.1/vue-resource.js"></script>
 <script src="./main.js"></script>
+
 
 </html>
