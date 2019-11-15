@@ -3,8 +3,11 @@ var app = new Vue({
     data:{
         activeName:'alert',
         updateTime:'',
+        updateInfo:'',
+        prevLog:[],
         tableData: [],
         search: '',
+        lastNew:'',
         loading: true,
         form:{
             item:'',
@@ -53,12 +56,19 @@ var app = new Vue({
                 return 1
             else
                 return (this.tableData.filter(data => data.other != "").length / this.total * 100).toFixed(1)
+        },
+        last_new_to_now:function(){
+            return(moment(this.lastNew, "YYYYMMDDHHmm").fromNow())
         }
     },
     mounted: function() {
+        moment.locale('zh-cn');
         this.$http.get('./data.json', this.formquery,{emulateJSON:true}).then(function(response){
           this.tableData = response.data.tableData;
           this.updateTime = response.data.updateTime;
+          this.updateInfo = response.data.updateInfo;
+          this.prevLog = response.data.prevLog;
+          this.lastNew = response.data.lastNew;
           this.loading = false
         }, function(response){
         // 响应错误回调
