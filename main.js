@@ -2,12 +2,11 @@ var app = new Vue({
     el: '#app',
     data:{
         activeName:'alert',
-        updateTime:'',
-        updateInfo:'',
-        prevLog:[],
+        updateInfo:{},
         tableData: [],
+        yishiyaoData:[],
+        jsgmData:[],
         search: '',
-        lastNew:'',
         loading: true,
         form:{
             item:'',
@@ -27,48 +26,12 @@ var app = new Vue({
         }
     },
     computed: {
-        total: function () {
-            if(this.loading)
-                return 1
-            else
-                return this.tableData.length
-        },
-        netease_ratio:function(){
-            if(this.loading)
-                return 1
-            else
-                return (this.tableData.filter(data => data.netease != "").length / this.total * 100).toFixed(1)
-        },
-        sing_ratio:function(){
-            if(this.loading)
-                return 1
-            else
-                return (this.tableData.filter(data => data.sing != "").length / this.total * 100).toFixed(1)
-        },
-        qqmusic_ratio:function(){
-            if(this.loading)
-                return 1
-            else
-                return (this.tableData.filter(data => data.qqmusic != "").length / this.total * 100).toFixed(1)
-        },
-        other_ratio:function(){
-            if(this.loading)
-                return 1
-            else
-                return (this.tableData.filter(data => data.other != "").length / this.total * 100).toFixed(1)
-        },
-        last_new_to_now:function(){
-            return(moment(this.lastNew, "YYYYMMDDHHmm").fromNow())
-        }
     },
     mounted: function() {
-        moment.locale('zh-cn');
-        this.$http.get('./data.json', this.formquery,{emulateJSON:true}).then(function(response){
-          this.tableData = response.data.tableData;
-          this.updateTime = response.data.updateTime;
-          this.updateInfo = response.data.updateInfo;
-          this.prevLog = response.data.prevLog;
-          this.lastNew = response.data.lastNew;
+        var now = new Date().getTime()
+        this.$http.get('./info.json', this.formquery,{emulateJSON:true}).then(function(response){
+          this.updateInfo = response.data;
+          this.draw_calendar()
           this.loading = false
         }, function(response){
         // 响应错误回调
@@ -105,6 +68,81 @@ var app = new Vue({
                     });
                 } else {
                     return false
+                }
+            })
+        },
+        loaddata(tab){
+            if(tab.name=="sixia" && this.tableData.length === 0){
+                this.loading = true
+                var now = new Date().getTime()
+                this.$http.get('./sixia.json', this.formquery,{emulateJSON:true}).then(function(response){
+                    this.tableData = response.data.tableData;
+                    this.loading = false
+                }, function(response){
+                    this.loading = false
+                });
+            }
+            if(tab.name=="yishiyao" && this.yishiyaoData.length === 0){
+                this.loading = true
+                var now = new Date().getTime()
+                this.$http.get('./yishiyao.json', this.formquery,{emulateJSON:true}).then(function(response){
+                    this.yishiyaoData = response.data.tableData;
+                    this.loading = false
+                }, function(response){
+                    this.loading = false
+                });
+            }
+            if(tab.name=="jsgm" && this.jsgmData.length === 0){
+                this.loading = true
+                var now = new Date().getTime()
+                this.$http.get('./jsgm.json', this.formquery,{emulateJSON:true}).then(function(response){
+                    this.jsgmData = response.data.tableData;
+                    this.loading = false
+                }, function(response){
+                    this.loading = false
+                });
+            }
+        },
+        draw_calendar(){
+            var myChart = echarts.init(document.getElementById('calendar'))
+            myChart.setOption({
+                visualMap: {
+                    min: 0,
+                    max: 2,
+                    splitNumber:3,
+                    type: 'piecewise',
+                    orient: 'horizontal',
+                    left: 'center',
+                    top: 65,
+                    textStyle: {
+                        color: '#000'
+                    },
+                    show:false,
+                    inRange:{
+                        color:['#fff','#2c974b']
+                    }
+                },
+                tooltip:{
+                    formatter: '{c}首'
+                },
+                calendar: {
+                    top:30,
+                    left: 30,
+                    right: 30,
+                    cellSize: ['auto', 13],
+                    range: [this.updateInfo.calendar.st,this.updateInfo.calendar.et],
+                    itemStyle: {
+                        borderWidth: 2,
+                        borderColor: '#ddd'
+                    },
+                    yearLabel: {show: false},
+                    dayLabel: {show: false},
+                    splitLine:{show: false}
+                },
+                series: {
+                    type: 'heatmap',
+                    coordinateSystem: 'calendar',
+                    data: this.updateInfo.calendar.list
                 }
             })
         }

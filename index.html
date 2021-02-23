@@ -4,7 +4,7 @@
   <title>司夏作品查询工具</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+  <link rel="stylesheet" href="https://cdn.staticfile.org/element-ui/2.13.0/theme-chalk/index.css">
   <link rel="icon" href="./logo.png" sizes="32x32">
 </head>
 <body style="margin: 0px">
@@ -14,16 +14,14 @@
         <h2>司夏 西国の海妖 作品查询工具</h2>
       </el-header>
       <el-main>
-        <el-tabs type="border-card" v-model="activeName">
+        <el-tabs type="border-card" v-model="activeName" @tab-click="loaddata">
           <el-tab-pane label="使用须知" name="alert">
-              <h3>资料更新时间 {{ updateTime }}</h3>
-              <h3>上次大王发歌时间 {{ last_new_to_now }}</h3>
+              <h3>资料更新时间 {{ updateInfo.updateTime }}</h3>
               1. 本工具基础数据来自 西国の海妖吧 闻名天下的大盗<br>
               2. 考虑到版权问题，所有歌曲的跳转链接都为各大音乐平台在线播放链接，无连接歌曲请自行在作品集中查找<br>
               3. 跳转链接分为：网易云音乐、5Sing、QQ音乐、其他平台（酷狗/酷我/B站/转圈）<br>
-              4. 同平台内重复资源：音质优先，音质相同大王账号下优先<br>
-              5. 目前已整理作品覆盖率：网易云音乐 {{ netease_ratio }}% | 5Sing {{ sing_ratio }}% | QQ音乐 {{ qqmusic_ratio }}% | 其他平台 {{ other_ratio }}%<br>
-              <h4>欢迎帮助整理大王作品：</h4>
+              4. 同平台内重复资源：音质优先，音质相同大王账号下优先
+              <div id="calendar" style="width: 800px;height:150px;"></div>
               <el-form :inline="true" :model="form" ref="form" :rules="rules" class="demo-form-inline">
                 <el-form-item label="作品名" prop="item">
                   <el-input v-model="form.item" placeholder="作品名"></el-input>
@@ -51,18 +49,10 @@
               <el-button @click="onGoto('http://tieba.baidu.com/p/6028572704')" style="margin:10px">转到司夏_西国の海妖作品集（贴吧）</el-button>
               <el-button @click="onGoto('https://github.com/nathan21hz/neris-music-library')" style="margin:10px">司夏作品查询工具（GitHub）</el-button>
               <el-button @click="onGoto('http://melody.xiguo.net/dev/index.html')" style="margin:10px">司夏作品查询工具（测试版）</el-button>
-              <h4>更新日志</h4>
-                  <div v-html="updateInfo"></div>
-              <el-collapse>
-                <el-collapse-item title="以往日志" name="1">
-                  <el-table :data="prevLog" style="width: 100%">
-                    <el-table-column prop="time" label="时间" width="100"></el-table-column>
-                    <el-table-column prop="log" label="更新记录"></el-table-column>
-                  </el-table>
-                </el-collapse-item>
-              </el-collapse>
+              <h4>更新信息</h4>
+                  <div v-html="updateInfo.updateInfo"></div>
           </el-tab-pane>
-          <el-tab-pane label="歌曲查询" name="query">
+          <el-tab-pane :label="'司夏（'+updateInfo.sixia+')'" name="sixia">
             <el-input v-model="search" placeholder="输入关键字搜索"></el-input>
             <el-table
               :data="tableData.filter(data => !search || data.title.toLowerCase().includes(search.toLowerCase()) || data.artists.toLowerCase().includes(search.toLowerCase()) || data.group.toLowerCase().includes(search.toLowerCase()) )" stripe 
@@ -71,6 +61,7 @@
             <el-table-column label="曲名" prop="title"></el-table-column>
             <el-table-column label="演唱/和声" prop="artists"></el-table-column>
             <el-table-column label="分组" prop="group"></el-table-column>
+            <el-table-column label="时间" prop="time"></el-table-column>
             <el-table-column label="备注" prop="info"></el-table-column>
             <el-table-column width="100">
               <template slot="header" slot-scope="scope">
@@ -92,6 +83,66 @@
             </el-table-column>
           </el-table>
         </el-tab-pane>
+        <el-tab-pane :label="'异世谣（'+updateInfo.yishiyao+')'" name="yishiyao">
+          <el-input v-model="search" placeholder="输入关键字搜索"></el-input>
+            <el-table
+              :data="yishiyaoData.filter(data => !search || data.title.toLowerCase().includes(search.toLowerCase()) || data.artists.toLowerCase().includes(search.toLowerCase()) || data.group.toLowerCase().includes(search.toLowerCase()) )" stripe 
+              style="width: 100%">
+            <el-table-column label="序号" prop="id" width="60"></el-table-column>
+            <el-table-column label="曲名" prop="title"></el-table-column>
+            <el-table-column label="演唱" prop="artists"></el-table-column>
+            <el-table-column label="分组" prop="group"></el-table-column>
+            <el-table-column label="时间" prop="time"></el-table-column>
+            <el-table-column label="备注" prop="info"></el-table-column>
+            <el-table-column width="100">
+              <template slot="header" slot-scope="scope">
+                链接
+              </template>
+              <template slot-scope="scope">
+                <el-dropdown @command="handleDropdown">
+                  <el-button size="small" type="primary">转到链接
+                  </el-button>
+                  <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item :command="scope.row.netease" v-if="haveUrl(scope.row.netease)">网易云音乐</el-dropdown-item>
+                    <el-dropdown-item :command="scope.row.qqmusic" v-if="haveUrl(scope.row.qqmusic)">QQ音乐</el-dropdown-item>
+                    <el-dropdown-item :command="scope.row.bilibili" v-if="haveUrl(scope.row.bilibili)">Bilibili</el-dropdown-item>
+                    <el-dropdown-item disabled="true" v-if="!haveUrl(scope.row.netease ||  scope.row.qqmusic || scope.row.bilibili)">暂无外链</el-dropdown-item>
+                  </el-dropdown-menu>
+                </el-dropdown>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
+        <el-tab-pane :label="'今时古梦（'+updateInfo.jsgm+')'" name="jsgm">
+          <el-input v-model="search" placeholder="输入关键字搜索"></el-input>
+            <el-table
+              :data="jsgmData.filter(data => !search || data.title.toLowerCase().includes(search.toLowerCase()) || data.artists.toLowerCase().includes(search.toLowerCase()) || data.group.toLowerCase().includes(search.toLowerCase()) )" stripe 
+              style="width: 100%">
+            <el-table-column label="序号" prop="id" width="60"></el-table-column>
+            <el-table-column label="曲名" prop="title"></el-table-column>
+            <el-table-column label="演唱" prop="artists"></el-table-column>
+            <el-table-column label="分组" prop="group"></el-table-column>
+            <el-table-column label="时间" prop="time"></el-table-column>
+            <el-table-column label="备注" prop="info"></el-table-column>
+            <el-table-column width="100">
+              <template slot="header" slot-scope="scope">
+                链接
+              </template>
+              <template slot-scope="scope">
+                <el-dropdown @command="handleDropdown">
+                  <el-button size="small" type="primary">转到链接
+                  </el-button>
+                  <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item :command="scope.row.netease" v-if="haveUrl(scope.row.netease)">网易云音乐</el-dropdown-item>
+                    <el-dropdown-item :command="scope.row.qqmusic" v-if="haveUrl(scope.row.qqmusic)">QQ音乐</el-dropdown-item>
+                    <el-dropdown-item :command="scope.row.bilibili" v-if="haveUrl(scope.row.bilibili)">Bilibili</el-dropdown-item>
+                    <el-dropdown-item disabled="true" v-if="!haveUrl(scope.row.netease ||  scope.row.qqmusic || scope.row.bilibili)">暂无外链</el-dropdown-item>
+                  </el-dropdown-menu>
+                </el-dropdown>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
         </el-tabs>
       </el-main>
       <el-footer style="color: #C0C4CC;text-align: center; font-size: 12px">
@@ -101,16 +152,15 @@
   </div>
 
 <div style="visibility: hidden;">
-    <script type="text/javascript" src="https://s23.cnzz.com/z_stat.php?id=1276897327&web_id=1276897327"></script>
+    
 <div>
     
 </body>
 
-<script src="https://cdn.bootcss.com/vue/2.5.22/vue.min.js"></script>
-<script src="https://cdn.bootcss.com/element-ui/2.4.11/index.js"></script>
-<script src="https://cdn.bootcss.com/vue-resource/1.5.1/vue-resource.js"></script>
-<script src="https://cdn.bootcss.com/moment.js/2.24.0/moment.js"></script>
-<script src="https://cdn.bootcss.com/moment.js/2.24.0/locale/zh-cn.js"></script>
+<script src="https://cdn.staticfile.org/vue/2.6.11/vue.min.js"></script>
+<script src="https://cdn.staticfile.org/element-ui/2.13.0/index.js"></script>
+<script src="https://cdn.staticfile.org/vue-resource/1.5.1/vue-resource.min.js"></script>
+<script src="https://cdn.staticfile.org/echarts/4.6.0/echarts.min.js"></script>
 <script src="./main.js"></script>
 
 
