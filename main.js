@@ -107,26 +107,42 @@ var app = new Vue({
             var myChart = echarts.init(document.getElementById('calendar'))
             myChart.setOption({
                 visualMap: {
-                    min: 0,
-                    max: 2,
-                    splitNumber:3,
+                    categories:["0","1","2"],
                     type: 'piecewise',
                     orient: 'horizontal',
                     left: 'center',
-                    top: 65,
+                    top: 10,
                     textStyle: {
                         color: '#000'
                     },
-                    show:false,
+                    show:true,
                     inRange:{
-                        color:['#fff','#2c974b']
+                        color:['#a6f0c6','#51c2d5','#eaac7f']
+                    },
+                    formatter: function (value, value2) {
+                        if(value=="0"){
+                            return "司夏"
+                        } else if(value == "1"){
+                            return "异世谣"
+                        } else if(value == "2"){
+                            return "今时古梦"
+                        }
                     }
                 },
-                tooltip:{
-                    formatter: '{c}首'
+                tooltip: {
+                    formatter:function (obj){
+                        var value = obj.value
+                        if(value[1] == 0){
+                            return value[0] + " 司夏"
+                        } else if(value[1] == 1){
+                            return value[0] + " 异世谣"
+                        } else if(value[1] == 2){
+                            return value[0] + " 今时古梦"
+                        }
+                    }
                 },
                 calendar: {
-                    top:30,
+                    top:55,
                     left: 30,
                     right: 30,
                     cellSize: ['auto', 13],

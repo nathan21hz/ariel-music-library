@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>司夏作品查询工具</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <link rel="stylesheet" href="https://cdn.staticfile.org/element-ui/2.13.0/theme-chalk/index.css">
+  <link rel="icon" href="./logo.png" sizes="32x32">
+</head>
+<body style="margin: 0px">
+  <div id="app">
+    <el-container>
+      <el-header style="background: #99a9bf;text-align: center;color: white;">
+        <h2>司夏 西国の海妖 作品查询工具</h2>
+      </el-header>
+      <el-main>
+        <el-tabs type="border-card" v-model="activeTab">
+          <el-tab-pane label="提交信息" name="upload">
+            <el-form ref="form" :rules="rules" :model="form" label-width="80px">
+              <el-form-item label="分类" prop="type">
+                <el-select v-model="form.type" placeholder="请选择分类">
+                  <el-option label="司夏" value="sixia"></el-option>
+                  <el-option label="异世谣" value="yishiyao"></el-option>
+                  <el-option label="今时古梦" value="jsgm"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="歌名" prop="title">
+                <el-input v-model="form.title"></el-input>
+              </el-form-item>
+              <el-form-item label="歌手" prop="artists">
+                <el-input v-model="form.artists"></el-input>
+              </el-form-item>
+              <el-form-item label="专辑/分组" prop="group">
+                <el-input v-model="form.group"></el-input>
+              </el-form-item>
+              <el-form-item label="上传日期" prop="date">
+                <el-date-picker type="date" placeholder="选择日期" v-model="form.date" value-format="yyyy-MM-dd"></el-date-picker>
+              </el-form-item>
+              <el-form-item label="网易云" prop="netease">
+                <el-input v-model="form.netease"></el-input>
+              </el-form-item>
+              <el-form-item label="QQ音乐" prop="qqmusic">
+                <el-input v-model="form.qqmusic"></el-input>
+              </el-form-item>
+              <el-form-item label="Bilibili" prop="bilibili">
+                <el-input v-model="form.bilibili"></el-input>
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" @click="submitForm()">提交</el-button>
+              </el-form-item>
+            </el-form>
+          </el-tab-pane>
+          <el-tab-pane label="待确认" name="review">
+            <el-input v-model="token" placeholder="Token">
+              <el-button slot="append" icon="el-icon-refresh" @click="getSubmission()"></el-button>
+            </el-input>
+            <el-table :data="tableData" v-loading="loading" stripe>
+              <el-table-column type="expand">
+                <template slot-scope="props">
+                  <el-form label-position="left" inline class="demo-table-expand">
+                    <el-form-item label="ID">
+                      <span>{{ props.row.id }}</span>
+                    </el-form-item>
+                    <el-form-item label="类别">
+                      <span>{{ props.row.type }}</span>
+                    </el-form-item>
+                    <el-form-item label="曲名">
+                      <span>{{ props.row.title }}</span>
+                    </el-form-item>
+                    <el-form-item label="演唱/和声">
+                      <span>{{ props.row.artists }}</span>
+                    </el-form-item>
+                    <el-form-item label="分组">
+                      <span>{{ props.row.group }}</span>
+                    </el-form-item>
+                    <el-form-item label="歌曲上线时间">
+                      <span>{{ props.row.date }}</span>
+                    </el-form-item>
+                    <el-form-item label="网易云">
+                      <span>{{ props.row.netease }}</span>
+                    </el-form-item>
+                    <el-form-item label="QQ音乐">
+                      <span>{{ props.row.qqmusic }}</span>
+                    </el-form-item>
+                    <el-form-item label="Bilibili">
+                      <span>{{ props.row.bilibili }}</span>
+                    </el-form-item>
+                    <el-form-item label="信息提交时间">
+                      <span>{{ props.row.time }}</span>
+                    </el-form-item>
+                    <el-form-item label="提交者IP">
+                      <span>{{ props.row.ip }}</span>
+                    </el-form-item>
+                  </el-form>
+                </template>
+              </el-table-column>
+              <el-table-column label="类别" prop="type"></el-table-column>
+              <el-table-column label="曲名" prop="title"></el-table-column>
+              <el-table-column label="演唱/和声" prop="artists"></el-table-column>
+              <el-table-column label="分组" prop="group"></el-table-column>
+              <el-table-column label="时间" prop="date"></el-table-column>
+              <el-table-column label="操作">
+                <template slot-scope="scope">
+                  <el-button
+                    size="mini"
+                    type="success"
+                    @click="handleApprove(scope.$index, scope.row)">通过</el-button>
+                  <el-button
+                    size="mini"
+                    type="danger"
+                    @click="handleDecline(scope.$index, scope.row)">拒绝</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            注意：主页的列表在每天8:00和20：00更新，刚刚通过的条目可能不会马上出现。
+          </el-tab-pane>
+        </el-tabs>
+      </el-main>
+      <el-footer style="color: #C0C4CC;text-align: center; font-size: 12px">
+        Powered by Alibaba Cloud & U-File<br><a style="text-decoration: none;color: #C0C4CC;" href="https://github.com/nathan21hz">Nathan_21Hz</a>
+      </el-footer>
+    </el-container>
+  </div>
+
+<div style="visibility: hidden;">
+    
+<div>
+    
+</body>
+
+<script src="https://cdn.staticfile.org/vue/2.6.11/vue.min.js"></script>
+<script src="https://cdn.staticfile.org/element-ui/2.13.0/index.js"></script>
+<script src="https://cdn.staticfile.org/vue-resource/1.5.1/vue-resource.min.js"></script>
+<script src="https://cdn.staticfile.org/echarts/4.6.0/echarts.min.js"></script>
+<script type="text/javascript">
+    var app = new Vue({
+        el: '#app',
+        data:{
+            activeTab:"upload",
+            rules: {
+              type:[{ required: true, message: '请选择分类', trigger: 'change' }],
+              title:[{ required: true, message: '请输入曲名', trigger: 'blur' }],
+              artists:[{ required: true, message: '请输入作者', trigger: 'blur' }],
+              date:[{ required: true, message: '请选择日期', trigger: 'change' }],
+              netease:[{ type: 'url', message: '必须为URL', trigger: 'blur' }],
+              qqmusic:[{ type: 'url', message: '必须为URL', trigger: 'blur' }],
+              bilibili:[{ type: 'url', message: '必须为URL', trigger: 'blur' }]
+            },
+            form:{
+              type:null,
+              title:"",
+              artists:"",
+              group:"",
+              date:"",
+              netease:"",
+              qqmusic:"",
+              bilibili:""
+            },
+            token:"",
+            tableData:[],
+            loading:false
+        },
+        computed: {
+        },
+        mounted: function() {
+
+        },
+        methods:{
+          submitForm(){
+            this.$refs["form"].validate((valid) => {
+                if (valid) {
+                    this.$http.post('https://1509749986895836.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/xiguo_sixia/xiguo_melody_upload/?action=submit',this.form).then(function(response){
+                        this.$message({
+                            message: response.data.message,
+                            type: response.data.type
+                        });
+                    }, function(response){
+                        // 响应错误回调
+                    });
+                } else {
+                    return false
+                }
+            })
+          },
+          getSubmission(){
+            this.loading=true
+            this.$http.get('https://1509749986895836.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/xiguo_sixia/xiguo_melody_upload/?action=list&token='+this.token).then(function(response){
+                    this.tableData = response.data.tableData;
+                    this.loading = false
+                }, function(response){
+                    this.loading = false
+                });
+          },
+          handleApprove(index,row){
+            this.loading=true
+            this.$http.post('https://1509749986895836.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/xiguo_sixia/xiguo_melody_upload/?action=approve&token='+this.token,{"id":row.id}).then(function(response){
+                  this.$message({
+                      message: response.data.message,
+                      type: response.data.type
+                  });
+                  this.getSubmission()
+              }, function(response){
+                  this.getSubmission()
+              });
+          },
+          handleDecline(index,row){
+            this.loading=true
+            this.$http.post('https://1509749986895836.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/xiguo_sixia/xiguo_melody_upload/?action=decline&token='+this.token,{"id":row.id}).then(function(response){
+                  this.$message({
+                      message: response.data.message,
+                      type: response.data.type
+                  });
+                  this.getSubmission()
+              }, function(response){
+                  this.getSubmission()
+              });
+          }
+        }
+    });
+
+</script>
+<style>
+  .demo-table-expand {
+    font-size: 0;
+  }
+  .demo-table-expand label {
+    width: 100px;
+    color: #99a9bf;
+  }
+  .demo-table-expand .el-form-item {
+    margin-right: 0;
+    margin-bottom: 0;
+    width: 50%;
+  }
+</style>
+
+</html>
