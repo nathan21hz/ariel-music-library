@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>司夏作品查询工具</title>
+  <title>信息提交 - 司夏作品查询工具</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <link rel="stylesheet" href="https://cdn.staticfile.org/element-ui/2.13.0/theme-chalk/index.css">
@@ -11,7 +11,7 @@
   <div id="app">
     <el-container>
       <el-header style="background: #99a9bf;text-align: center;color: white;">
-        <h2>司夏 西国の海妖 作品查询工具</h2>
+        <h2>信息提交</h2>
       </el-header>
       <el-main>
         <el-tabs type="border-card" v-model="activeTab">
@@ -46,7 +46,8 @@
                 <el-input v-model="form.bilibili"></el-input>
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" @click="submitForm()">提交</el-button>
+                <el-button type="primary" @click="submitForm()" :loading="loading">提交</el-button>
+                <a href="index.html"><el-button >返回主页</el-button></a>
               </el-form-item>
             </el-form>
           </el-tab-pane>
@@ -169,13 +170,15 @@
           submitForm(){
             this.$refs["form"].validate((valid) => {
                 if (valid) {
+                	this.loading=true
                     this.$http.post('https://1509749986895836.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/xiguo_sixia/xiguo_melody_upload/?action=submit',this.form).then(function(response){
                         this.$message({
                             message: response.data.message,
                             type: response.data.type
                         });
+                        this.loading = false
                     }, function(response){
-                        // 响应错误回调
+                        this.loading = false
                     });
                 } else {
                     return false
