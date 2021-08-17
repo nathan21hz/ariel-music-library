@@ -1,3 +1,14 @@
+const ap = new APlayer({
+    container: document.getElementById('aplayer'),
+    autoplay: false,
+    loop: 'all',
+    preload: 'auto',
+    volume: 0.7,
+    mutex: true,
+    lrcType: 1,
+    fixed: true,
+});
+
 var app = new Vue({
     el: '#app',
     data:{
@@ -26,18 +37,47 @@ var app = new Vue({
         }
     },
     computed: {
+        scaleFun: function () {
+          var scale = 1;
+          var hight = 170
+          if (document.body.clientWidth > 870) {
+            scale = 1
+            hight = 170
+          } else {
+            scale = (document.body.clientWidth-70) / 800
+            hight = 170
+          }
+          return `width: 800px;height:${hight}px;transform:scale(${scale});transform-origin: left;`;
+        },
     },
     mounted: function() {
         var now = new Date().getTime()
-        this.$http.get('./info.json', this.formquery,{emulateJSON:true}).then(function(response){
-          this.updateInfo = response.data;
-          this.draw_calendar()
-          this.loading = false
-        }, function(response){
-        // 响应错误回调
-        });
+        if (this.isToday("2021-5-6")) {
+            this.$http.get('./info_hb.json?t='+now, this.formquery,{emulateJSON:true}).then(function(response){
+                this.updateInfo = response.data;
+                this.draw_calendar()
+                this.loading = false
+            }, function(response){
+            // 响应错误回调
+            });
+        } else {
+            this.$http.get('./info.json?t='+now, this.formquery,{emulateJSON:true}).then(function(response){
+                this.updateInfo = response.data;
+                this.draw_calendar()
+                this.loading = false
+            }, function(response){
+            // 响应错误回调
+            });
+        }
     },
     methods:{
+        isToday(str){
+            var d = new Date();
+            var y = d.getFullYear(); // 年
+            var m = d.getMonth() + 1; // 月份从0开始的
+            var d = d.getDate(); //日
+            return str == (y + '-' + m + '-' + d);
+        },
         onGoto(url) {
             if(url){
                 window.open(url)
@@ -75,7 +115,7 @@ var app = new Vue({
             if(tab.name=="sixia" && this.tableData.length === 0){
                 this.loading = true
                 var now = new Date().getTime()
-                this.$http.get('./sixia.json', this.formquery,{emulateJSON:true}).then(function(response){
+                this.$http.get('./sixia.json?t='+now, this.formquery,{emulateJSON:true}).then(function(response){
                     this.tableData = response.data.tableData;
                     this.loading = false
                 }, function(response){
@@ -85,7 +125,7 @@ var app = new Vue({
             if(tab.name=="yishiyao" && this.yishiyaoData.length === 0){
                 this.loading = true
                 var now = new Date().getTime()
-                this.$http.get('./yishiyao.json', this.formquery,{emulateJSON:true}).then(function(response){
+                this.$http.get('./yishiyao.json?t='+now, this.formquery,{emulateJSON:true}).then(function(response){
                     this.yishiyaoData = response.data.tableData;
                     this.loading = false
                 }, function(response){
@@ -95,7 +135,7 @@ var app = new Vue({
             if(tab.name=="jsgm" && this.jsgmData.length === 0){
                 this.loading = true
                 var now = new Date().getTime()
-                this.$http.get('./jsgm.json', this.formquery,{emulateJSON:true}).then(function(response){
+                this.$http.get('./jsgm.json?t='+now, this.formquery,{emulateJSON:true}).then(function(response){
                     this.jsgmData = response.data.tableData;
                     this.loading = false
                 }, function(response){
@@ -161,6 +201,45 @@ var app = new Vue({
                     data: this.updateInfo.calendar.list
                 }
             })
+        },
+        playOnline(row, column, event) {
+          var title = row.title
+          var audiolink = row.filepath
+          var netease_url = row.netease
+          var baseUrl = "http://mass-storage.21hz.top/ariel-melody/"
+          reg_res = /[0-9]{4,}/.exec(netease_url)
+          if(reg_res){
+            netease_id = reg_res[0]
+            this.$http.get('https://1509749986895836.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/xiguo_sixia/CoverLrcGet/?id='+netease_id).then(function(response){
+              ap.list.add({
+                name:title,
+                artist:"司夏",
+                url:baseUrl+audiolink+title+'.mp3',
+                lrc:response.data.lrc,
+                cover:response.data.cover
+              })
+              ap.list.switch(ap.list.audios.length-1)
+              ap.play()
+            }, function(response){
+            // 响应错误回调
+              ap.list.add({
+                name:title,
+                artist:"司夏",
+                url:baseUrl+audiolink+title+'.mp3',
+              })
+              ap.list.switch(ap.list.audios.length-1)
+              ap.play()
+            });
+          }
+          else{
+            ap.list.add({
+              name:title,
+              artist:"司夏",
+              url:baseUrl+audiolink+title+'.mp3',
+            })
+            ap.list.switch(ap.list.audios.length-1)
+            ap.play()
+          }
         }
     }
 });

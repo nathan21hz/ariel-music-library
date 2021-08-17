@@ -52,9 +52,24 @@
             </el-form>
           </el-tab-pane>
           <el-tab-pane label="待确认" name="review">
-            <el-input v-model="token" placeholder="Token">
-              <el-button slot="append" icon="el-icon-refresh" @click="getSubmission()"></el-button>
-            </el-input>
+            <div>
+              <div v-if="login.logged">
+                登录成功：{{login.username}}
+                <el-button type="primary" @click="getSubmission" size="small">刷新</el-button>
+                <el-button @click="onLogout" size="small">退出</el-button>
+              </div>
+              <el-form :inline="true" v-else>
+                <el-form-item label="用户名">
+                  <el-input v-model="login.username" placeholder="用户名"></el-input>
+                </el-form-item>
+                <el-form-item label="密码">
+                  <el-input v-model="login.passwd" placeholder="密码" type="password"></el-input>
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" @click="onLogin">登录</el-button>
+                </el-form-item>
+              </el-form>
+            </div>
             <el-table :data="tableData" v-loading="loading" stripe>
               <el-table-column type="expand">
                 <template slot-scope="props">
@@ -157,7 +172,12 @@
               qqmusic:"",
               bilibili:""
             },
-            token:"",
+            login:{
+              logged:false,
+              token:"",
+              username:"",
+              passwd:""
+            },
             tableData:[],
             loading:false
         },
@@ -187,7 +207,7 @@
           },
           getSubmission(){
             this.loading=true
-            this.$http.get('https://1509749986895836.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/xiguo_sixia/xiguo_melody_upload/?action=list&token='+this.token).then(function(response){
+            this.$http.get('https://1509749986895836.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/xiguo_sixia/xiguo_melody_upload/?action=list&token='+this.login.token).then(function(response){
                     this.tableData = response.data.tableData;
                     this.loading = false
                 }, function(response){
@@ -196,7 +216,7 @@
           },
           handleApprove(index,row){
             this.loading=true
-            this.$http.post('https://1509749986895836.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/xiguo_sixia/xiguo_melody_upload/?action=approve&token='+this.token,{"id":row.id}).then(function(response){
+            this.$http.post('https://1509749986895836.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/xiguo_sixia/xiguo_melody_upload/?action=approve&token='+this.login.token,{"id":row.id}).then(function(response){
                   this.$message({
                       message: response.data.message,
                       type: response.data.type
@@ -208,7 +228,7 @@
           },
           handleDecline(index,row){
             this.loading=true
-            this.$http.post('https://1509749986895836.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/xiguo_sixia/xiguo_melody_upload/?action=decline&token='+this.token,{"id":row.id}).then(function(response){
+            this.$http.post('https://1509749986895836.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/xiguo_sixia/xiguo_melody_upload/?action=decline&token='+this.login.token,{"id":row.id}).then(function(response){
                   this.$message({
                       message: response.data.message,
                       type: response.data.type
@@ -217,6 +237,27 @@
               }, function(response){
                   this.getSubmission()
               });
+          },
+          onLogin(){
+            this.loading=true
+            this.$http.get('http://fc.21hz.top/jwt?action=get&username='+this.login.username+'&passwd='+this.login.passwd).then(function(response){
+                    this.$message({
+                      message: response.data.message,
+                      type: response.data.type
+                    });
+                    if(response.data.type=="success"){
+                      this.login.token = response.data.token
+                      this.login.logged = true
+                    }
+                    this.loading = false
+                }, function(response){
+                    this.loading = false
+                });
+
+          },
+          onLogout(){
+            this.login.token = ""
+            this.login.logged = false
           }
         }
     });
