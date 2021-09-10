@@ -207,7 +207,13 @@ var app = new Vue({
 			var title = row.title
 			var audiolink = row.filepath
 			var netease_url = row.netease
+			var qq_url = row.qqmusic
 			reg_res = /[0-9]{4,}/.exec(netease_url)
+			var platform = "netease"
+			if(!reg_res){
+				reg_res = /(?<=songDetail\/).*/.exec(qq_url)
+				platform = "qq"
+			}
 
 			if(row.time != ""){
 				pubTimeStamp = Date.parse(new Date(row.time))
@@ -221,8 +227,8 @@ var app = new Vue({
 			}
 		  
 			if(reg_res){
-				netease_id = reg_res[0]
-				this.$http.get('https://1509749986895836.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/xiguo_sixia/CoverLrcGet/?id='+netease_id).then(function(response){
+				muisc_id = reg_res[0]
+				this.$http.get('https://1509749986895836.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/xiguo_sixia/CoverLrcGet/?id='+muisc_id+'&platform='+platform).then(function(response){
 					ap.list.add({
 						name:title,
 						artist:"司夏",
