@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <link rel="stylesheet" href="https://cdn.staticfile.org/element-ui/2.13.0/theme-chalk/index.css">
   <link rel="icon" href="./logo.png" sizes="32x32">
+  <script async defer data-website-id="b1c53fa7-b47a-4874-9a94-0fce89d1b2b9" src="https://umami-seven-cyan.vercel.app/umami.js"></script>
 </head>
 <body style="margin: 0px">
   <div id="app">
@@ -56,6 +57,7 @@
               <div v-if="login.logged">
                 登录成功：{{login.username}}
                 <el-button type="primary" @click="getSubmission" size="small">刷新</el-button>
+                <el-button type="primary" @click="invokeUpdate" size="small">立即更新</el-button>
                 <el-button @click="onLogout" size="small">退出</el-button>
               </div>
               <el-form :inline="true" v-else>
@@ -148,6 +150,7 @@
 <script src="https://cdn.staticfile.org/element-ui/2.13.0/index.js"></script>
 <script src="https://cdn.staticfile.org/vue-resource/1.5.1/vue-resource.min.js"></script>
 <script src="https://cdn.staticfile.org/echarts/4.6.0/echarts.min.js"></script>
+<script src="https://unpkg.com/vue-cookies@1.7.4/vue-cookies.js"></script>
 <script type="text/javascript">
     var app = new Vue({
         el: '#app',
@@ -184,7 +187,10 @@
         computed: {
         },
         mounted: function() {
-
+          if(this.$cookies.isKey("token")){
+            this.login.token = this.$cookies.get("token")
+            this.login.logged = true
+          } 
         },
         methods:{
           submitForm(){
@@ -209,6 +215,18 @@
             this.loading=true
             this.$http.get('https://1509749986895836.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/xiguo_sixia/xiguo_melody_upload/?action=list&token='+this.login.token).then(function(response){
                     this.tableData = response.data.tableData;
+                    this.loading = false
+                }, function(response){
+                    this.loading = false
+                });
+          },
+          invokeUpdate(){
+            this.loading=true
+            this.$http.get('https://1509749986895836.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/xiguo_sixia/invoke_update/?token='+this.login.token).then(function(response){
+                    this.$message({
+                      message: response.data.message,
+                      type: response.data.type
+                    });
                     this.loading = false
                 }, function(response){
                     this.loading = false
@@ -248,16 +266,17 @@
                     if(response.data.type=="success"){
                       this.login.token = response.data.token
                       this.login.logged = true
+                      this.$cookies.set("token",response.data.token,"0",null,"21hz.top");
                     }
                     this.loading = false
                 }, function(response){
                     this.loading = false
                 });
-
           },
           onLogout(){
             this.login.token = ""
             this.login.logged = false
+            this.$cookies.remove("token")
           }
         }
     });

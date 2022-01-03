@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>分享/下载 - 司夏作品查询工具</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <link href="https://cdn.bootcss.com/element-ui/2.12.0/theme-chalk/index.css" rel="stylesheet">
+  <link rel="icon" href="./logo.png" sizes="32x32">
+</head>
+<body style="margin: 0px;font-family: 'Helvetica Neue',Helvetica,'PingFang SC','Hiragino Sans GB','Microsoft YaHei','微软雅黑',Arial,sans-serif;">
+  <div id="app" v-loading.fullscreen.lock="loading">
+      <el-container>
+        <el-header style="background: #99a9bf;text-align: center;color: white;height:auto;">
+          <h2>司夏 西国の海妖 作品查询工具</h2>
+        </el-header>
+        <el-main>
+          <aplayer :music="music_data" showLrc="true" autoplay="true" theme="#b7daff"></aplayer>
+          <div style="text-align: center;">
+            <br>
+            <a 
+              :href="music_data.src"
+              :download="music_data.title">
+              <el-button type="primary" style="width: 250px">下载</el-button>
+            </a>
+            <p style="text-decoration: none;color: #C0C4CC; font-size: 12px">下载链接有效期10分钟</p>
+            <el-button plain style="width: 250px" @click="copyToClip(window.location.href)">复制本页链接</el-button>
+          </div>
+        </el-main>
+        <el-footer style="color: #C0C4CC;text-align: center; font-size: 12px">
+          Update 20220102<br>
+          Powered by Alibaba Cloud<br>
+          <a style="text-decoration: none;color: #C0C4CC;" href="https://github.com/nathan21hz">Nathan_21Hz</a>
+        </el-footer>
+      </el-container>
+    </div>
+</body>
+<script src="https://cdn.staticfile.org/vue/2.6.11/vue.min.js"></script>
+<script src="https://cdn.staticfile.org/element-ui/2.13.0/index.js"></script>
+<script src="https://cdn.staticfile.org/vue-resource/1.5.1/vue-resource.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue-aplayer"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/vue-clipboard2/0.3.1/vue-clipboard.min.js"></script>
+<script type="text/javascript">
+
+Vue.component('aplayer', VueAPlayer)
+
+var app = new Vue({
+  el: '#app',
+  data:{
+    loading: false,
+    music_data: {},
+    music_id: ""
+  },
+  methods: {
+    getQueryString(name){
+       var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+       var r = window.location.search.substr(1).match(reg);
+       if(r!=null)return  unescape(r[2]); return null;
+    },
+    playOnline(inner_id) {
+      this.loading = true
+      var baseUrl = "http://fc.21hz.top/sixia-music"
+      this.$http.get(baseUrl+'?id='+inner_id).then(function(response){
+        this.music_data = response.data
+        if(response.data.url) {
+          this.music_data = {
+            src: response.data.url,
+            title: response.data.title,
+            artist: response.data.artists,
+            pic: response.data.cover,
+            lrc: response.data.lrc
+          }
+          this.loading = false
+        } else {
+          alert('新歌上线30日内不提供播放和下载');
+          window.location.href="/index.html"
+        }
+      }, function(response){
+      // 响应错误回调
+        alert('歌曲获取失败');
+        window.location.href="/index.html"
+      });
+    },
+    copyToClip(text){
+      var that = this
+      this.$copyText(text).then(function (e) {
+        that.$message('已复制到剪贴板')
+        console.log(e)
+      }, function (e) {
+        that.$message('Cannot copy')
+        console.log(e)
+      })
+    }
+  },
+  mounted: function () {
+    if(this.getQueryString("id") != null){
+      this.music_id = this.getQueryString("id")
+      this.playOnline(this.music_id)
+    } else {
+      alert('未指定歌曲ID');
+      window.location.href="/index.html"
+    }
+  }
+})
+</script>
+</html>
